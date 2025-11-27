@@ -1,0 +1,62 @@
+name: Playwright Tests
+
+on:
+  push:
+    branches: [ main, master, feature/test ]
+  pull_request:
+    branches: [ main, master, feature/test ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300  # 5 hours
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Show working directory (pwd)
+        run: pwd
+
+      - name: Clear caches and reinstall dependencies
+        run: |
+          npm cache clean --force
+          rm -rf node_modules
+          rm -rf ~/.cache/ms-playwright
+          npm install
+          npm install -D @playwright/test allure-playwright
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Playwright Tests with xvfb
+        continue-on-error: true
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          xvfb-run --auto-servernum npx playwright test
+
+      - name: Generate Allure Report
+        if: always()
+        run: npx allure generate allure-results -o test-results/allure-report --clean
+
+      - name: Upload Test Results & Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-reports
+          path: |
+            test-results/
+            *.log
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload JUnit XML Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-report
+          path: test-results/junit.xml
