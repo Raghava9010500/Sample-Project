@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main, master, feature/test ]
 
+    schedule:
+    - cron: '0 4 * * *' # Daily run at 04:00 AM UTC
+
 jobs:
   test:
     runs-on: ubuntu-latest
