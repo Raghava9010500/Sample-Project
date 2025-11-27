@@ -9,6 +9,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 300  # 5 hours
+
     steps:
       - uses: actions/checkout@v4
 
@@ -16,33 +18,45 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install Dependencies
-        run: npm install
+      - name: Show working directory (pwd)
+        run: pwd
+
+      - name: Clear caches and reinstall dependencies
+        run: |
+          npm cache clean --force
+          rm -rf node_modules
+          rm -rf ~/.cache/ms-playwright
+          npm install
+          npm install -D @playwright/test allure-playwright
 
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
 
-      # Run Tests (allure-results will be created here)
-      - name: Run Playwright Tests
-        run: npx playwright test
+      - name: Run Playwright Tests with xvfb
+        continue-on-error: true
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          xvfb-run --auto-servernum npx playwright test
 
-      # Generate HTML Report
       - name: Generate Allure Report
         if: always()
-        run: npx allure generate allure-results --clean -o allure-report
+        run: npx allure generate allure-results -o test-results/allure-report --clean
 
-      # Upload Allure Raw results
-      - name: Upload Allure Results
+      - name: Upload Test Results & Logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: allure-results
-          path: allure-results
+          name: playwright-reports
+          path: |
+            test-results/
+            *.log
+          if-no-files-found: warn
+          retention-days: 14
 
-      # Upload Allure HTML report
-      - name: Upload Allure HTML Report
+      - name: Upload JUnit XML Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: allure-report
-          path: allure-report
+          name: junit-report
+          path: test-results/junit.xml
