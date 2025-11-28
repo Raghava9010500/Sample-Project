@@ -5,14 +5,13 @@ on:
     branches: [ main, master, feature/test ]
   pull_request:
     branches: [ main, master, feature/test ]
-
-    schedule:
-    - cron: '0 4 * * *' # Daily run at 04:00 AM UTC
+  schedule:
+    - cron: '0 9 * * *' # Daily run at 09:00 AM UTC
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 300  # 5 hours
+    timeout-minutes: 300
 
     steps:
       - uses: actions/checkout@v4
@@ -54,8 +53,8 @@ jobs:
           path: |
             test-results/
             *.log
-          if-no-files-found: warn
           retention-days: 14
+          if-no-files-found: warn
 
       - name: Upload JUnit XML Report
         if: always()
