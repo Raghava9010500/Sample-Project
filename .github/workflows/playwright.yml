@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ main, master, feature/test ]
   schedule:
-    - cron: '0 9 * * *' # Daily run at 09:00 AM UTC
+    - cron: '30 3 * * *' # Daily run at 09:00 AM UTC
 
 jobs:
   test:
